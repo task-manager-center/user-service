@@ -1,8 +1,11 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Column, Integer, String, DateTime, func, select
+from sqlalchemy.exc import IntegrityError
 
-from libs.pg import Base
+from apps.users import exc
+from apps.users.hashing import password_hashing
+from libs.pg import Base, ainsert, async_session
 
 
 class User(Base):
@@ -17,3 +20,31 @@ class User(Base):
 	def __repr__(self):
 		return f"User <{self.id}>"
 
+	@staticmethod
+	async def create_user(email: str, password: str):
+		try:
+			await ainsert(
+				model=User,
+				data=[
+					{
+						"email": email,
+						"hashed_password": password_hashing.hash_password(password=password)
+					}
+				]
+			)
+		except IntegrityError:
+			raise exc.UserAlreadyExistException
+
+	@staticmethod
+	async def get_user(email: str, password: str) -> "User":
+		async with async_session() as session:
+			result = await session.execute(select(User).where(User.email == email).limit(1))
+
+		user = result.scalars().first()
+		if not user:
+			raise exc.UserDoesNotExistException
+
+		if not password_hashing.check_password(password=password, hashed_password=user.hashed_password):
+			raise exc.UserDoesNotExistException
+
+		return user
