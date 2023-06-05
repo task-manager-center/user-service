@@ -21,16 +21,15 @@ class User(Base):
 		return f"User <{self.id}>"
 
 	@staticmethod
-	async def create_user(email: str, password: str):
+	async def create_user(email: str, password: str) -> "User.id":
 		try:
-			await ainsert(
+			return await ainsert(
 				model=User,
-				data=[
-					{
-						"email": email,
-						"hashed_password": password_hashing.hash_password(password=password)
-					}
-				]
+				data={
+					"email": email,
+					"hashed_password": password_hashing.hash_password(password=password)
+				},
+				returning=User.id,
 			)
 		except IntegrityError:
 			raise exc.UserAlreadyExistException

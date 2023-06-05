@@ -13,7 +13,7 @@ Base = declarative_base()
 async_session = async_sessionmaker(async_engine, expire_on_commit=False)
 
 
-async def ainsert(model: Base, data: List[dict]):
+async def ainsert(model: Base, data: dict, returning: Any) -> Any:
 	"""
 	Asynchronous insert into database
 	:param model: database model
@@ -21,11 +21,12 @@ async def ainsert(model: Base, data: List[dict]):
 		{"email": "email1", "hashed_password": "2134"},
 		{"email": "email2", "hashed_password": "2134"},
 	]
-	:return: None
+	:param returning: what method will return
+	:return: anything from returning param
 	"""
 	async with async_session() as session:
 		async with session.begin():
-			await session.execute(
-				insert(model),
-				data,
+			result = await session.execute(
+				insert(model).values(**data).returning(returning),
 			)
+			print("Insert result", result.scalars().one())

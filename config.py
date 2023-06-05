@@ -13,9 +13,14 @@ class PasswordConfig:
 	SALT: str = os.environ.get("SALT")
 
 
+class TokenConfig:
+	SECRET_KEY: str = os.environ.get("SECRET_KEY", "secret")
+
+
 class BaseConfig(
 	DBConfig,
 	PasswordConfig,
+	TokenConfig,
 ):
 	DEBUG: bool = os.environ.get("DEBUG", False)
 
