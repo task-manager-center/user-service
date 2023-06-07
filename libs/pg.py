@@ -26,7 +26,6 @@ async def ainsert(model: Base, data: dict, returning: Any) -> Any:
 	"""
 	async with async_session() as session:
 		async with session.begin():
-			result = await session.execute(
+			return await session.execute(
 				insert(model).values(**data).returning(returning),
 			)
-			print("Insert result", result.scalars().one())

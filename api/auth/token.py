@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 from typing import Optional
 
 import jwt
-from jwt import DecodeError
+from jwt import DecodeError, ExpiredSignatureError
 
 from config import config
 
@@ -25,11 +25,7 @@ def create_access_token(user_id: int, expires_delta: timedelta = None) -> str:
 def parse_token(token: str) -> Optional[int]:
 	try:
 		payload = jwt.decode(token, config.SECRET_KEY, algorithms=[ALGORITHM])
-	except DecodeError:
-		return
-
-	expire = payload.get("expire")
-	if not expire or expire < datetime.utcnow():
+	except (DecodeError, ExpiredSignatureError):
 		return
 
 	return payload.get("user_id")
